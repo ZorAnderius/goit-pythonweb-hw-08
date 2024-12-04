@@ -1,6 +1,8 @@
-from typing import List
+from typing import List, Optional
+from datetime import date, timedelta
 
 from sqlalchemy import select
+from sqlalchemy.sql import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Contact
@@ -11,8 +13,20 @@ class ContactsRepository:
     def __init__(self,session: AsyncSession):
         self.session = session
 
-    async def get_contacts(self, skip: int = 0, limit: int = 10) -> List[Contact]:
+    async def get_contacts(self,
+                           skip: Optional[int] = 0,
+                           limit: Optional[int] = 10,
+                           first_name: Optional[str] = None,
+                           last_name: Optional[str] = None,
+                           email: Optional[str] = None) -> List[Contact]:
         query = select(Contact).offset(skip).limit(limit)
+        if first_name:
+            query = query.where(Contact.first_name.ilike(f"%{first_name}%"))
+        if last_name:
+            query = query.where(Contact.last_name.ilike(f"%{last_name}%"))
+        if email:
+            query = query.where(Contact.email.ilike(f"%{email}%"))
+
         contacts = await self.session.execute(query)
         return list(contacts.scalars().all())
 
@@ -43,3 +57,11 @@ class ContactsRepository:
             await self.session.delete(contact)
             await self.session.commit()
         return contact
+
+    async def get_contacts_for_weekly_birthday(self):
+        today = date.today()
+        next_week = today + timedelta(days=7)
+        query = select(Contact).where(and_(Contact.dob >= today, Contact.dob <= next_week))
+        contacts = await self.session.execute(query)
+        return contacts.scalars().all()
+

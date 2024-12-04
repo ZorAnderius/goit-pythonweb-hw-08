@@ -1,5 +1,5 @@
-from typing import List
-from fastapi import APIRouter, Depends, status,HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, status,HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
@@ -14,9 +14,14 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[ContactsResponse], response_description="List of all contacts")
-async def get_contacts(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db)) -> List[ContactsResponse]:
+async def get_contacts(skip: Optional[int] = Query(0, description="Pagination offset"),
+                       limit: Optional[int] = Query(10, description="Pagination limit"),
+                       first_name: Optional[str] = Query(None, description="Filtering by first name"),
+                       last_name: Optional[str] = Query(None, description="Filtering by last name"),
+                       email: Optional[str] = Query(None, description="Filtering by email"),
+                       db: AsyncSession = Depends(get_db)) -> List[Contact]:
     contacts_service = ContactsServices(db)
-    contacts = await contacts_service.get_contacts(skip, limit)
+    contacts = await contacts_service.get_contacts(skip, limit, first_name, last_name, email)
     return contacts
 
 @router.get("/{contact_id}", response_model=ContactsResponse, response_description="Get contact by id")

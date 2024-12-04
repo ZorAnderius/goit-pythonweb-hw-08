@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List, Optional
 
 from src.database.models import Contact
 from src.repository.contacts import ContactsRepository
@@ -9,8 +10,13 @@ class ContactsServices:
     def __init__(self, db: AsyncSession):
         self.repository = ContactsRepository(db)
 
-    async def get_contacts(self, skip: int = 0, limit: int = 10):
-        return await self.repository.get_contacts(skip, limit)
+    async def get_contacts(self,
+                           skip: Optional[int] = 0,
+                           limit: Optional[int] = 10,
+                           first_name: Optional[str] = None,
+                           last_name: Optional[str] = None,
+                           email: Optional[str] = None) -> List[Contact]:
+        return await self.repository.get_contacts(skip, limit, first_name, last_name, email)
 
     async def get_contact_by_id(self, contact_id: int):
         return await self.repository.get_contact_by_id(contact_id)
@@ -23,3 +29,6 @@ class ContactsServices:
 
     async def delete_contact(self, contact_id: int):
         return await self.repository.delete_contact(contact_id)
+
+    async def get_contact_by_first_name(self, first_name: str) -> List[Contact]:
+        return await self.repository.get_contact_by_first_name(first_name)
