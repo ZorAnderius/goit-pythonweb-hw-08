@@ -30,5 +30,5 @@ class ContactsServices:
     async def delete_contact(self, contact_id: int):
         return await self.repository.delete_contact(contact_id)
 
-    async def get_contact_by_first_name(self, first_name: str) -> List[Contact]:
-        return await self.repository.get_contact_by_first_name(first_name)
+    async def get_contacts_for_weekly_birthday(self) -> List[Contact]:
+        return await self.repository.get_contacts_for_weekly_birthday()

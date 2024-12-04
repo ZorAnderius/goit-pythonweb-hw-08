@@ -1,8 +1,8 @@
 from typing import List, Optional
 from datetime import date, timedelta
 
-from sqlalchemy import select
-from sqlalchemy.sql import and_
+from sqlalchemy import select, extract
+from sqlalchemy.sql import and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Contact
@@ -61,7 +61,20 @@ class ContactsRepository:
     async def get_contacts_for_weekly_birthday(self):
         today = date.today()
         next_week = today + timedelta(days=7)
-        query = select(Contact).where(and_(Contact.dob >= today, Contact.dob <= next_week))
+
+        query = select(Contact).where(
+            and_(
+                and_(
+                    extract('month', Contact.dob) == today.month,
+                    extract('day', Contact.dob) >= today.day,
+                ),
+                and_(
+                    extract('month', Contact.dob) == next_week.month,
+                    extract('day', Contact.dob) <= next_week.day,
+                )
+            )
+        )
+
         contacts = await self.session.execute(query)
         return contacts.scalars().all()
 
