@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
+from datetime import date
 
 from src.database.models import Contact
 from src.repository.contacts import ContactsRepository
@@ -30,5 +31,5 @@ class ContactsServices:
     async def delete_contact(self, contact_id: int):
         return await self.repository.delete_contact(contact_id)
 
-    async def get_contacts_for_weekly_birthday(self) -> List[Contact]:
-        return await self.repository.get_contacts_for_weekly_birthday()
+    async def get_contacts_for_weekly_birthday(self, birthday_date: Optional[date]) -> List[Contact]:
+        return await self.repository.get_contacts_for_weekly_birthday(birthday_date)

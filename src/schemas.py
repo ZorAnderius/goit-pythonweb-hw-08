@@ -15,6 +15,9 @@ class ContactsModel(UpdateContactModel):
     email: EmailStr = Field(..., max_length=50, description="Email")
     phone: str =Field(...,max_length=15, min_length=10, description="Phone")
 
+class ContactBirthdayModel(BaseModel):
+    dob: Optional[date] = Field(default=date.today(), description='Date of birth (YYYY-MM-DD)')
+
 class ContactsResponse(ContactsModel):
     id: int
 

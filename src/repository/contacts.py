@@ -1,5 +1,6 @@
 from typing import List, Optional
 from datetime import date, timedelta
+from calendar import monthrange
 
 from sqlalchemy import select, extract
 from sqlalchemy.sql import and_, or_
@@ -58,22 +59,43 @@ class ContactsRepository:
             await self.session.commit()
         return contact
 
-    async def get_contacts_for_weekly_birthday(self):
-        today = date.today()
-        next_week = today + timedelta(days=7)
+    async def get_contacts_for_weekly_birthday(self, birthday_date: Optional[date]):
+        today = birthday_date
+        last_day_of_current_month = date(today.year, today.month, monthrange(today.year, today.month)[1])
+        days_until_end_of_month = (last_day_of_current_month - today).days
+        if days_until_end_of_month < 7:
+            next_month = today.month + 1
+            if today.month == 12:
+                next_year = today.year + 1
+                next_month = 1
+            else:
+                next_year = today.year
+            first_day_of_next_month = date(next_year, next_month, 1)
+            end_day_of_rang_month = date(next_year, next_month, (7-days_until_end_of_month))
 
-        query = select(Contact).where(
-            and_(
+            query = select(Contact).where(
+                or_(
+                    and_(
+                        extract('month', Contact.dob) == today.month,
+                        extract('day', Contact.dob) >= today.day,
+                        extract('day', Contact.dob) <= last_day_of_current_month.day,
+                    ),
+
+                    and_(
+                        extract('month', Contact.dob) == next_month,
+                        extract('day', Contact.dob) >= first_day_of_next_month.day,
+                        extract('day', Contact.dob) <= end_day_of_rang_month.day,
+                    )
+                )
+            )
+        else:
+            query = select(Contact).where(
                 and_(
                     extract('month', Contact.dob) == today.month,
                     extract('day', Contact.dob) >= today.day,
-                ),
-                and_(
-                    extract('month', Contact.dob) == next_week.month,
-                    extract('day', Contact.dob) <= next_week.day,
+                    extract('day', Contact.dob) <= (today + timedelta(days=7)).day,
                 )
             )
-        )
 
         contacts = await self.session.execute(query)
         return contacts.scalars().all()

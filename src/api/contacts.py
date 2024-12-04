@@ -1,4 +1,5 @@
 from typing import List, Optional
+from datetime import date
 from fastapi import APIRouter, Depends, status,HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,9 +30,10 @@ async def get_contacts(skip: Optional[int] = Query(0, description="Pagination of
 @router.get("/weekly-birthday",
             response_model=List[ContactsResponse],
             response_description="Get contacts for weekly birthday")
-async def get_contact_for_weekly_birthday(db: AsyncSession = Depends(get_db)) -> List[Contact]:
+async def get_contact_for_weekly_birthday(birthday_date: Optional[date] = Query(date.today(), description="Date from which to get contact's birthdays"),
+db: AsyncSession = Depends(get_db)) -> List[Contact]:
     contacts_service = ContactsServices(db)
-    contacts = await contacts_service.get_contacts_for_weekly_birthday()
+    contacts = await contacts_service.get_contacts_for_weekly_birthday(birthday_date)
     return contacts
 
 @router.get("/{contact_id}",
