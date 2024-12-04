@@ -8,23 +8,27 @@ from src.conf.config import config
 class DatabaseSessionManager:
     def __init__(self, url: str):
         self._engine: AsyncEngine | None = create_async_engine(url)
-        self._session_maker: async_sessionmaker = async_sessionmaker(autoflush=False, autocommit=False, bind=self._engine)
+        self._session_maker: async_sessionmaker = async_sessionmaker(
+            autoflush=False, autocommit=False, bind=self._engine
+        )
 
     @contextlib.asynccontextmanager
     async def session(self):
         if self._session_maker is None:
-            raise Exception("Database is not initialized")
+            raise Exception("Database session is not initialized")
         session = self._session_maker()
         try:
             yield session
         except SQLAlchemyError as e:
             await session.rollback()
-            raise e
+            raise  # Re-raise the original error
         finally:
             await session.close()
 
-session_manager = DatabaseSessionManager(config.DB_URL)
 
-async def get_dvb():
-    async with session_manager.session() as session:
+sessionmanager = DatabaseSessionManager(config.DB_URL)
+
+
+async def get_db():
+    async with sessionmanager.session() as session:
         yield session
